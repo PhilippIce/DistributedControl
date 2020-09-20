@@ -10,7 +10,7 @@ import time
 
 class Vector2d():
     """
-    2维向量, 支持加减, 支持常量乘法(右乘)
+    Implementation of a vector class
     """
 
     def __init__(self, x, y):
@@ -39,9 +39,7 @@ class Vector2d():
 
     def __add__(self, other):
         """
-        + 重载
-        :param other:
-        :return:
+        Simple vector addition
         """
         vec = Vector2d(self.deltaX, self.deltaY)
         vec.deltaX += other.deltaX
@@ -73,22 +71,22 @@ class Vector2d():
 
 class APF():
     """
-    人工势场寻路
+    Definition of the artificial potential field
     """
 
     def __init__(self, start: (), goal: (), obstacles: [], k_att: float, k_rep: float, rr: float,
                  step_size: float, max_iters: int, goal_threshold: float, is_plot=False):
         """
-        :param start: 起点
-        :param goal: 终点
-        :param obstacles: 障碍物列表，每个元素为Vector2d对象
-        :param k_att: 引力系数
-        :param k_rep: 斥力系数
-        :param rr: 斥力作用范围
-        :param step_size: 步长
-        :param max_iters: 最大迭代次数
-        :param goal_threshold: 离目标点小于此值即认为到达目标点
-        :param is_plot: 是否绘图
+        :param start: 
+        :param goal: 
+        :param obstacles: 
+        :param k_att: 
+        :param k_rep: 
+        :param rr: 
+        :param step_size: 
+        :param max_iters: 
+        :param goal_threshold:
+        :param is_plot: 
         """
         self.start = Vector2d(start[0], start[1])
         self.current_pos = Vector2d(start[0], start[1])
@@ -108,26 +106,24 @@ class APF():
 
     def attractive(self):
         """
-        引力计算
-        :return: 引力
+        returns the attractive force
         """
-        att = (self.goal - self.current_pos) * self.k_att  # 方向由机器人指向目标点
+        att = (self.goal - self.current_pos) * self.k_att  #Simple linear model for attraction
         return att
 
     def repulsion(self):
         """
-        斥力计算
-        :return: 斥力大小
+            Returns the repulsive force
         """
-        rep = Vector2d(0, 0)  # 所有障碍物总斥力
+        rep = Vector2d(0, 0)  # Start vector of repulsion
         for obstacle in self.obstacles:
             # obstacle = Vector2d(0, 0)
             t_vec = self.current_pos - obstacle
-            if (t_vec.length > self.rr):  # 超出障碍物斥力影响范围
+            if (t_vec.length > self.rr):  # No influence as there is a high distance
                 pass
             else:
                 rep += Vector2d(t_vec.direction[0], t_vec.direction[1]) * self.k_rep * (
-                        1.0 / t_vec.length - 1.0 / self.rr) / (t_vec.length ** 2)  # 方向由障碍物指向机器人
+                        1.0 / t_vec.length - 1.0 / self.rr) / (t_vec.length ** 2)  # Repulsive force is acting
         return rep
 
     def path_plan(self):
@@ -150,15 +146,13 @@ class APF():
 
 
 if __name__ == '__main__':
-    # 相关参数设置
     k_att, k_rep = 1., 100.0
     rr = 3  
-    step_size, max_iters, goal_threashold = .2, 500, .2  # 步长0.5寻路1000次用时4.37s, 步长0.1寻路1000次用时21s
+    step_size, max_iters, goal_threashold = .2, 500, .2 #Setting the parameters
     step_size_ = 2
     start, goal = (0, 0), (15, 20)
     is_plot = True
-    #is_plot = False
-    if is_plot:
+    if is_plot: #Initial plot is created, only the common parts
         fig = plt.figure(figsize=(7, 7))
         plt.title("Path Plan for different Attraction and Repulsion Parameters")
         subplot = fig.add_subplot(111)
@@ -166,7 +160,6 @@ if __name__ == '__main__':
         subplot.set_ylabel('Y-distance: m')
         subplot.plot(start[0], start[1], '*r')
         subplot.plot(goal[0], goal[1], '*r')
-    # 障碍物设置及绘制
     obs = [[1, 4], [2, 4], [3, 3], [6, 1], [6, 7], [10, 6], [11, 12], [14, 14]]
     print('obstacles: {0}'.format(obs))
     for i in range(0):
@@ -180,11 +173,10 @@ if __name__ == '__main__':
     # t1 = time.time()
     # for i in range(1000):
 
-    for attraction in range(5, 15, 10):
+    for attraction in range(5, 15, 10): #Repeats are done to obtain overview of influence
         print(attraction)
         for rep in range(50, 550, 100):
             k_att, k_rep = attraction, rep
-            # 设置、绘制起点终点
             # path plan
             if is_plot:
                 apf = APF(start, goal, obs, k_att, k_rep, rr, step_size, max_iters, goal_threashold, is_plot)
@@ -201,26 +193,18 @@ if __name__ == '__main__':
                     path_.append(path[i])
                     i += int(step_size_ / step_size)
 
-                if path_[-1] != path[-1]:  # 添加最后一个点
+                if path_[-1] != path[-1]:  
                     path_.append(path[-1])
                 print('planed path points:{}'.format(path_))
                 print('path plan success')
                 if is_plot:
-                    #px, py = [K[0] for K in path_], [K[1] for K in path_]  # 路径点x坐标列表, y坐标列表
-                    px, py = [K[0] for K in path], [K[1] for K in path]  # 路径点x坐标列表, y坐标列表
+                    px, py = [K[0] for K in path], [K[1] for K in path]  
                     subplot.plot(px, py, 'x', label="Repulsion: {}".format(rep))
-                    #plt.show()
-                    #plt.savefig("".join(['./paths/', str(k_att), ',', str(k_rep),".png"]))
-                    #print("./paths/Att{0}Rep{1}.png", format(str(k_att), str(k_rep)))
-            else:
+            else: # Plotting the relevant points even if the target is not reached
                 print('path plan failed')
                 if is_plot:
-                    #px, py = [K[0] for K in path_], [K[1] for K in path_]  # 路径点x坐标列表, y坐标列表
-                    px, py = [K[0] for K in path], [K[1] for K in path]  # 路径点x坐标列表, y坐标列表
+                    px, py = [K[0] for K in path], [K[1] for K in path]  
                     subplot.plot(px, py, 'x', label="Repulsion: {}".format(rep))
-            # t2 = time.time()
-            #px, py = [K[0] for K in path_], [K[1] for K in path_]  # 路径点x坐标列表, y坐标列表
-            #subplot.plot(px, py, '^k')
     plt.legend()
     #plt.show()
     plt.savefig("./paths/PlannedPathsTotal.png")
